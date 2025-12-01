@@ -2,7 +2,7 @@
 
 Um gerenciador de estudos interativo e visual para candidatos do Vestibular da FATEC (Faculdade de Tecnologia de São Paulo).
 
-🔗 **[Acesse o projeto online aqui](COLOCAR_SEU_LINK_DO_NETLIFY_AQUI)**
+🔗 **[Acesse o projeto online aqui](https://fatec-projeto.netlify.app/)**
 
 ## 📋 Sobre o Projeto
 
