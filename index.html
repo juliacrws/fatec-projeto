@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plano de Estudos FATEC</title>
+    <!-- Tailwind CSS para o estilo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React e Babel para a lógica -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body { background-color: #f3f4f6; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Dados do Edital com Emojis no lugar de ícones para facilitar
+        const syllabusData = {
+            portugues: {
+                title: "Língua Portuguesa & Literatura",
+                icon: "📖",
+                color: "bg-red-100 text-red-700",
+                topics: [
+                    "Interpretação de Texto (Explícito vs Implícito)",
+                    "Variação Linguística e Níveis de Formalidade",
+                    "Classes de Palavras (Substantivo, Verbo...)",
+                    "Sintaxe (Coordenação e Subordinação)",
+                    "Figuras de Linguagem",
+                    "Literatura: Barroco",
+                    "Literatura: Romantismo",
+                    "Literatura: Modernismo (BR e PT)",
+                    "Literatura: Trovadorismo e Realismo (PT)",
+                    "Gêneros Literários (Conto, Crônica, Poema)"
+                ]
+            },
+            matematica: {
+                title: "Matemática & Raciocínio Lógico",
+                icon: "📐",
+                color: "bg-blue-100 text-blue-700",
+                topics: [
+                    "Conjuntos Numéricos e Operações",
+                    "Regra de Três e Porcentagem (Muito importante!)",
+                    "Funções (1º e 2º Grau, Exponencial, Log)",
+                    "Análise Combinatória e Probabilidade",
+                    "Geometria Plana (Áreas e Perímetros)",
+                    "Geometria Espacial (Volumes)",
+                    "Trigonometria (Seno, Cosseno, Triângulos)",
+                    "Estatística (Média, Moda, Mediana, Gráficos)",
+                    "Sistemas Lineares"
+                ]
+            },
+            ciencias: {
+                title: "Ciências da Natureza",
+                icon: "🧬",
+                color: "bg-green-100 text-green-700",
+                topics: [
+                    "FÍSICA: Cinemática e Leis de Newton",
+                    "FÍSICA: Energia e Trabalho",
+                    "FÍSICA: Termologia e Calorimetria",
+                    "FÍSICA: Eletricidade e Ondulatória",
+                    "QUÍMICA: Tabela Periódica e Ligações",
+                    "QUÍMICA: Estequiometria (Cálculos)",
+                    "QUÍMICA: Funções Inorgânicas (Ácidos/Bases)",
+                    "QUÍMICA: Orgânica e Meio Ambiente",
+                    "BIOLOGIA: Ecologia e Sustentabilidade",
+                    "BIOLOGIA: Citologia e Metabolismo",
+                    "BIOLOGIA: Fisiologia Humana e Genética"
+                ]
+            },
+            humanas: {
+                title: "Humanas (História & Geografia)",
+                icon: "🌍",
+                color: "bg-yellow-100 text-yellow-700",
+                topics: [
+                    "HIST: Brasil Colônia e Império",
+                    "HIST: Brasil República (Vargas até dias atuais)",
+                    "HIST: Guerras Mundiais e Guerra Fria",
+                    "GEO: Cartografia e Fusos Horários",
+                    "GEO: Geopolítica e Globalização",
+                    "GEO: Urbanização e Industrialização",
+                    "GEO: Questões Ambientais e Clima",
+                    "GEO: População e Demografia"
+                ]
+            },
+            redacao: {
+                title: "Redação (Critérios FATEC)",
+                icon: "✍️",
+                color: "bg-purple-100 text-purple-700",
+                topics: [
+                    "Estrutura: Dissertação OU Narração",
+                    "Título: OBRIGATÓRIO (Não esqueça!)",
+                    "Norma Culta: Gramática e Ortografia",
+                    "Coesão e Coerência (Conectivos)",
+                    "Tema: Não fugir do tema proposto",
+                    "Não escrever em versos",
+                    "Letra legível e sem marcas de identificação"
+                ]
+            }
+        };
+
+        const StudyApp = () => {
+            const [completed, setCompleted] = useState({});
+            const [expandedSection, setExpandedSection] = useState(null);
+            const [activeTab, setActiveTab] = useState('overview');
+
+            useEffect(() => {
+                const saved = localStorage.getItem('fatecStudyProgress');
+                if (saved) {
+                    setCompleted(JSON.parse(saved));
+                }
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('fatecStudyProgress', JSON.stringify(completed));
+            }, [completed]);
+
+            const toggleTopic = (section, topic) => {
+                setCompleted(prev => {
+                    const sectionCompleted = prev[section] || [];
+                    const isCompleted = sectionCompleted.includes(topic);
+                    let newSectionCompleted;
+                    if (isCompleted) {
+                        newSectionCompleted = sectionCompleted.filter(t => t !== topic);
+                    } else {
+                        newSectionCompleted = [...sectionCompleted, topic];
+                    }
+                    return { ...prev, [section]: newSectionCompleted };
+                });
+            };
+
+            const calculateProgress = () => {
+                let totalTopics = 0;
+                let completedCount = 0;
+                Object.keys(syllabusData).forEach(key => {
+                    totalTopics += syllabusData[key].topics.length;
+                    completedCount += (completed[key] || []).length;
+                });
+                return totalTopics === 0 ? 0 : Math.round((completedCount / totalTopics) * 100);
+            };
+
+            const toggleSection = (key) => {
+                setExpandedSection(expandedSection === key ? null : key);
+            };
+
+            const ProgressRing = ({ radius, stroke, progress }) => {
+                const normalizedRadius = radius - stroke * 2;
+                const circumference = normalizedRadius * 2 * Math.PI;
+                const strokeDashoffset = circumference - (progress / 100) * circumference;
+                return (
+                    <div className="flex items-center justify-center relative w-32 h-32">
+                        <svg height={radius * 2} width={radius * 2} className="rotate-[-90deg] transition-all duration-500">
+                            <circle stroke="#e5e7eb" strokeWidth={stroke} fill="transparent" r={normalizedRadius} cx={radius} cy={radius} />
+                            <circle stroke="#ef4444" fill="transparent" strokeWidth={stroke} strokeDasharray={circumference + ' ' + circumference} style={{ strokeDashoffset }} strokeLinecap="round" r={normalizedRadius} cx={radius} cy={radius} />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-gray-700">{progress}%</div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen p-4 md:p-8">
+                    <div className="max-w-4xl mx-auto">
+                        <header className="mb-8 text-center">
+                            <h1 className="text-4xl font-extrabold text-red-600 mb-2">Projeto FATEC 🎯</h1>
+                            <p className="text-gray-600">Seu guia organizado para dominar o vestibular</p>
+                        </header>
+
+                        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 flex flex-col md:flex-row items-center justify-between">
+                            <div className="mb-4 md:mb-0">
+                                <h2 className="text-xl font-bold mb-1">Seu Progresso Geral</h2>
+                                <p className="text-sm text-gray-500">Cada tópico conta! Continue firme.</p>
+                            </div>
+                            <ProgressRing radius={60} stroke={8} progress={calculateProgress()} />
+                        </div>
+
+                        <div className="flex space-x-2 mb-6 overflow-x-auto pb-2 justify-center">
+                            <button onClick={() => setActiveTab('overview')} className={`px-4 py-2 rounded-full font-semibold text-sm transition-colors ${activeTab === 'overview' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}>Matérias</button>
+                            <button onClick={() => setActiveTab('redacao')} className={`px-4 py-2 rounded-full font-semibold text-sm transition-colors ${activeTab === 'redacao' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}>Guia Redação</button>
+                            <button onClick={() => setActiveTab('dicas')} className={`px-4 py-2 rounded-full font-semibold text-sm transition-colors ${activeTab === 'dicas' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}>Dicas</button>
+                        </div>
+
+                        {activeTab === 'overview' && (
+                            <div className="grid gap-4">
+                                {Object.entries(syllabusData).map(([key, data]) => {
+                                    const isExpanded = expandedSection === key;
+                                    const sectionTotal = data.topics.length;
+                                    const sectionCompleted = (completed[key] || []).length;
+                                    const percent = Math.round((sectionCompleted / sectionTotal) * 100);
+
+                                    return (
+                                        <div key={key} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                                            <div onClick={() => toggleSection(key)} className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-3 rounded-lg text-2xl ${data.color}`}>{data.icon}</div>
+                                                    <div>
+                                                        <h3 className="font-bold text-lg text-gray-800">{data.title}</h3>
+                                                        <p className="text-xs text-gray-500">{sectionCompleted}/{sectionTotal} tópicos concluídos</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden hidden md:block">
+                                                        <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${percent}%` }} />
+                                                    </div>
+                                                    <span className="text-gray-400">{isExpanded ? '▲' : '▼'}</span>
+                                                </div>
+                                            </div>
+
+                                            {isExpanded && (
+                                                <div className="bg-gray-50 p-4 border-t border-gray-100">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        {data.topics.map((topic, idx) => {
+                                                            const isChecked = (completed[key] || []).includes(topic);
+                                                            return (
+                                                                <div key={idx} onClick={() => toggleTopic(key, topic)} className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${isChecked ? 'bg-green-50 border border-green-200' : 'bg-white border border-gray-200 hover:border-red-300'}`}>
+                                                                    <div className={`mt-1 min-w-[20px] h-5 rounded-full border-2 flex items-center justify-center ${isChecked ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
+                                                                        {isChecked && <span className="text-white text-xs">✓</span>}
+                                                                    </div>
+                                                                    <span className={`text-sm ${isChecked ? 'text-green-800 line-through opacity-70' : 'text-gray-700'}`}>{topic}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {activeTab === 'redacao' && (
+                            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">✍️ Guia de Redação FATEC</h2>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="bg-yellow-50 p-5 rounded-lg border border-yellow-200">
+                                        <h3 className="font-bold text-yellow-800 mb-2">⚠️ Zera a nota</h3>
+                                        <ul className="list-disc list-inside text-sm text-yellow-900 space-y-1">
+                                            <li>Fugir do tema</li>
+                                            <li>Escrever 5 linhas ou menos</li>
+                                            <li>Desenhos ou sinais estranhos</li>
+                                            <li>Assinar a folha</li>
+                                        </ul>
+                                    </div>
+                                    <div className="bg-blue-50 p-5 rounded-lg border border-blue-200">
+                                        <h3 className="font-bold text-blue-800 mb-2">✅ Essencial</h3>
+                                        <ul className="list-disc list-inside text-sm text-blue-900 space-y-1">
+                                            <li><strong>Título:</strong> É OBRIGATÓRIO!</li>
+                                            <li><strong>Gênero:</strong> Dissertação ou Narração</li>
+                                            <li><strong>Letra:</strong> Legível</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {activeTab === 'dicas' && (
+                             <div className="grid gap-4">
+                                <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                                    <h3 className="font-bold text-lg mb-2">🧠 Multidisciplinaridade</h3>
+                                    <p className="text-gray-600">A FATEC mistura matérias. Estude conectando Biologia com Química, ou História com Geografia.</p>
+                                </div>
+                                <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                                    <h3 className="font-bold text-lg mb-2">⚖️ Pesos</h3>
+                                    <p className="text-gray-600">Verifique o manual do candidato. Cursos de Exatas valorizam mais Matemática; Humanas valorizam Português.</p>
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<StudyApp />);
+    </script>
+</body>
+</html>
